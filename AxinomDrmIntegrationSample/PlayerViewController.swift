@@ -13,11 +13,11 @@ class PlayerViewController: AVPlayerViewController, AVContentKeySessionDelegate 
     // Certificate Url
     let fpsCertificateUrl: String = "CERTIFICATE_URL"
     
-    // Licensing Token
-    let licensingToken: String = "DRM-TOKEN-VALUE"
+    // License Token
+    let licenseToken: String = "DRM-TOKEN-VALUE"
  
-    // Licensing Service Url
-    let licensingServiceUrl: String = "https://drm-fairplay-licensing.axtest.net/AcquireLicense"
+    // License Service Url
+    let licenseServiceUrl: String = "https://drm-fairplay-licensing.axtest.net/AcquireLicense"
      
     // Video url
     let videoUrl: String = "https://media.axprod.net/VTB/DrmQuickStart/AxinomDemoVideo-SingleKey/Encrypted_Cbcs/Manifest.m3u8"
@@ -93,12 +93,13 @@ class PlayerViewController: AVPlayerViewController, AVContentKeySessionDelegate 
     func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVContentKeyRequest) {
         
         /*
-         Parse ContentId from keyRequest and capture everything after "sdk://"
+         Parse Content Id from key request, by capturing everything after
+         "sdk://" from the key request's "identifier", which is the value of the
+         URI attribute of a #EXT-X-KEY tag in the HLS media manifest that is
+         about to be played.
         */
         guard let contentKeyIdentifierString = keyRequest.identifier as? String,
-        /*
-          Capture everything after "sdk://" from #EXT-X-SESSION-KEY "URI" parameter.
-        */
+
         let contentIdentifier = contentKeyIdentifierString.replacingOccurrences(of: "skd://", with: "") as String?,
         
         /*
@@ -111,8 +112,8 @@ class PlayerViewController: AVPlayerViewController, AVContentKeySessionDelegate 
         
         /*
          Completion handler for makeStreamingContentKeyRequestData method.
-         1. Sends obtained SPC to Key Server
-         2. Receives CKC from Key Server
+         1. Sends obtained SPC to License Service
+         2. Receives CKC from License Service
          3. Makes content key response object (AVContentKeyResponse)
          4. Provide the content key response object to make protected content available for processing
         */
@@ -132,19 +133,19 @@ class PlayerViewController: AVPlayerViewController, AVContentKeySessionDelegate 
             guard let spcData = spcData else { return }
  
             /*
-             Send SPC to Key Server and obtain CKC.
+             Send SPC to License Service and obtain CKC.
             */
-            guard let url = URL(string: strongSelf.licensingServiceUrl) else {
-                print("ERROR: missingLicensingServiceUrl")
+            guard let url = URL(string: strongSelf.licenseServiceUrl) else {
+                print("ERROR: missingLicenseServiceUrl")
                 return
             }
             
             /*
-             Before sending an SPC to Key Server (KSM) we need to set provided Licensing Token to "X-AxDRM-Message" HTTP header.
+             Before sending an SPC to License Service (KSM) we need to set provided License Token to "X-AxDRM-Message" HTTP header.
             */
             var ksmRequest = URLRequest(url: url)
             ksmRequest.httpMethod = "POST"
-            ksmRequest.setValue(strongSelf.licensingToken, forHTTPHeaderField: "X-AxDRM-Message")
+            ksmRequest.setValue(strongSelf.licenseToken, forHTTPHeaderField: "X-AxDRM-Message")
             ksmRequest.httpBody = spcData
             
             var dataTask: URLSessionDataTask?
@@ -162,7 +163,7 @@ class PlayerViewController: AVPlayerViewController, AVContentKeySessionDelegate 
                     response.statusCode == 200 {
                     
                     /*
-                     AVContentKeyResponse is used to represent the data returned from the key server when requesting a key for
+                     AVContentKeyResponse is used to represent the data returned from the license service when requesting a key for
                      decrypting content.
                      */
                     let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)

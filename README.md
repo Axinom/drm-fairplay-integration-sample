@@ -1,6 +1,8 @@
 # Axinom DRM Integration Sample
  
-The purpose of this sample application is to provide a minimal setup needed to use Axinom DRM with AVFoundation framework to play FairPlay protected HTTP Live Streams (HLS) hosted on remote servers.
+The purpose of this sample application is to provide a minimal setup needed to
+use Axinom DRM with AVFoundation framework to play FairPlay protected HTTP Live 
+Streaming (HLS) media hosted on remote servers.
  
 You can use the example code provided in this sample to build your own application that integrates the Axinom DRM with AVFoundation.
 
@@ -14,10 +16,12 @@ Following steps are mandatory to play FairPlay protected HLS streams:
 
 ```swift
 func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVPersistableContentKeyRequest) {    
-    // Parse ContentId from keyRequest and capture everything after "sdk://"
+    // Parse Content Id from key request, by capturing everything after
+    // "sdk://" from the key request's "identifier", which is the value of the
+    // URI attribute of a #EXT-X-KEY tag in the HLS media manifest that is
+    // about to be played.
     guard let contentKeyIdentifierString = keyRequest.identifier as? String,
-
-    // Capture everything after "sdk://" from #EXT-X-SESSION-KEY "URI" parameter.
+    
     let contentIdentifier = contentKeyIdentifierString.replacingOccurrences(of: "skd://", with: "") as String?,
     
     // Convert contentIdentifier to Unicode string (utf8)
@@ -26,7 +30,7 @@ func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AV
         return
     }
 ```
-## 3. Request an FPS Certificate
+## 2. Request an FPS Certificate
 
 The following code snippet shows how to retrieve FPS certificate from fpsCertificateUrl.
 
@@ -44,7 +48,7 @@ func requestApplicationCertificate() throws -> Data {
 }
 ```
 
-## 4. Obtain a Content Key Request data (SPC) 
+## 3. Obtain a Content Key Request data (SPC) 
 
 Pass Content Identifier previously encoded as Unicode string together with FPS Certificate to ```keyRequest.makeStreamingContentKeyRequestData``` method to obtain a Content Key Request data (SPC) for a specific combination of application and content.
 
@@ -57,15 +61,15 @@ keyRequest.makeStreamingContentKeyRequestData(forApp: self.fpsCertificate,
 }
 ```
 
-## 5. Add Licensing Token to HTTP header of the Licensing Request
+## 4. Add License Token to HTTP header of the License Request
 
-Before sending a Content Key Request (SPC) to Key Server (KSM) we need to set the Licensing Token to "X-AxDRM-Message" HTTP header.
+Before sending a Content Key Request (SPC) to License Service (KSM) we need to set the License Token to "X-AxDRM-Message" HTTP header.
 
 
 ```swift
 var ksmRequest = URLRequest(url: url)
     ksmRequest.httpMethod = "POST"
-    ksmRequest.setValue(licensingToken, forHTTPHeaderField: "X-AxDRM-Message")
+    ksmRequest.setValue(licenseToken, forHTTPHeaderField: "X-AxDRM-Message")
     ksmRequest.httpBody = spcData
 ```
 
